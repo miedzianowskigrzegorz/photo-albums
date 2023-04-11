@@ -3,6 +3,7 @@ package pl.gm.albums.album.service;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.transaction.Transactional;
 import org.modelmapper.ModelMapper;
+import org.modelmapper.TypeToken;
 import org.springframework.stereotype.Service;
 import pl.gm.albums.album.dto.AlbumDto;
 import pl.gm.albums.album.model.AlbumEntity;
@@ -36,8 +37,9 @@ public class AlbumService {
      * @return List of AlbumDto objects.
      */
     public List<AlbumDto> listAll() {
-        List<AlbumDto> albums = modelMapper.map(albumRepository.findAll(), ArrayList.class);
-        return albums;
+        List<AlbumEntity> albumEntities = albumRepository.findAll();
+        return modelMapper.map(albumEntities, new TypeToken<List<AlbumDto>>() {
+        }.getType());
     }
 
     /**
@@ -50,13 +52,15 @@ public class AlbumService {
     }
 
     /**
-     * Retrieves an album with the given ID from the database and maps it to an AlbumDto object.
+     * Retrieves an album with the given ID from the repository and maps it to an AlbumDto object.
      * @param id ID of the album to be retrieved.
-     * @return AlbumDto object with the specified ID.
+     * @return AlbumDto object representing the album entity with the specified ID.
+     * @throws EntityNotFoundException if an album with the specified ID is not found in the repository.
      */
     public AlbumDto getById(long id) {
-        AlbumDto album = modelMapper.map(albumRepository.findById(id), AlbumDto.class);
-        return album;
+        AlbumEntity albumEntity = albumRepository.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException("Album with id " + id + " not found"));
+        return modelMapper.map(albumEntity, AlbumDto.class);
     }
 
     /**
