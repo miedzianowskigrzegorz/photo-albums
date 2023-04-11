@@ -1,5 +1,6 @@
 package pl.gm.albums.photo.service;
 
+import jakarta.persistence.EntityNotFoundException;
 import org.modelmapper.ModelMapper;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
@@ -12,8 +13,8 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
+import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 
 @Service
 public class PhotoService {
@@ -28,34 +29,40 @@ public class PhotoService {
 
     /**
      * Retrieves a list of all photos from the repository.
-     * @return List of PhotoEntity objects.
+     * @return List of PhotoDto objects.
      */
-    public List<PhotoEntity> listAll() {
-        return photoRepository.findAll();
+    public List<PhotoDto> listAll() {
+        List<PhotoDto> photos = modelMapper.map(photoRepository.findAll(), ArrayList.class);
+        return photos;
     }
 
     /**
      * Saves a photo to the repository.
-     * @param photo PhotoEntity object to be saved.
+     * @param photoDto PhotoEntity object to be saved.
      */
-    public void save(PhotoEntity photo) {
+    public void save(PhotoDto photoDto) {
+        PhotoEntity photo = modelMapper.map(photoDto,PhotoEntity.class);
         photoRepository.save(photo);
     }
 
     /**
-     * Retrieves an optional photo with the given ID from the repository.
+     * Retrieves an photo with the given ID from the repository and maps it to an PhotoDto object.
      * @param id ID of the photo to be retrieved.
-     * @return Optional containing the PhotoEntity object with the specified ID, or empty if not found.
+     * @return PhotoDto object representing the photo entity with the specified ID.
+     * @throws EntityNotFoundException if an photo with the specified ID is not found in the repository.
      */
-    public Optional<PhotoEntity> getById(long id) {
-        return photoRepository.findById(id);
+    public PhotoDto getById(long id) {
+        PhotoEntity photoEntity = photoRepository.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException("Photo with id " + id + " not found"));
+        return modelMapper.map(photoEntity, PhotoDto.class);
     }
 
     /**
-     * Updates an existing photo in the repository.
-     * @param photo PhotoEntity object to be updated.
+     * Maps the PhotoDto object to an PhotoEntity and updates it in the database.
+     * @param photoDto PhotoDto object to be updated.
      */
-    public void update(PhotoEntity photo) {
+    public void update(PhotoDto photoDto) {
+        PhotoEntity photo = modelMapper.map(photoDto,PhotoEntity.class);
         photoRepository.save(photo);
     }
 
