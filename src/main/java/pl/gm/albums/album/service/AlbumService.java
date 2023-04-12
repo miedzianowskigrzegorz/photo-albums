@@ -11,24 +11,22 @@ import pl.gm.albums.album.repository.AlbumRepository;
 import pl.gm.albums.photo.dto.PhotoDto;
 import pl.gm.albums.photo.model.PhotoEntity;
 import pl.gm.albums.photo.repository.PhotoRepository;
+import pl.gm.albums.photo.service.PhotoService;
 
-
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.util.ArrayList;
 import java.util.List;
 
 @Service
 public class AlbumService {
     private final AlbumRepository albumRepository;
     private final PhotoRepository photoRepository;
+
+    private final PhotoService photoService;
     private final ModelMapper modelMapper;
 
-    public AlbumService(AlbumRepository albumRepository, PhotoRepository photoRepository, ModelMapper modelMapper) {
+    public AlbumService(AlbumRepository albumRepository, PhotoRepository photoRepository, PhotoService photoService, ModelMapper modelMapper) {
         this.albumRepository = albumRepository;
         this.photoRepository = photoRepository;
+        this.photoService = photoService;
         this.modelMapper = modelMapper;
     }
 
@@ -85,7 +83,7 @@ public class AlbumService {
         PhotoEntity mainPhoto = album.getMainPhoto();
         if (mainPhoto != null) {
             photoRepository.delete(mainPhoto);
-            deleteFile(mainPhoto.getPath() + mainPhoto.getFileName());
+            photoService.deletePhotoFile(mainPhoto.getPath() + mainPhoto.getFileName());
         }
 
         // Delete the other photos of the album
@@ -93,10 +91,9 @@ public class AlbumService {
         if (!photos.isEmpty()) {
             for (PhotoEntity photo : photos) {
                 photoRepository.delete(photo);
-                deleteFile(photo.getPath() + photo.getFileName());
+                photoService.deletePhotoFile(photo.getPath() + photo.getFileName());
             }
         }
-
         // Delete the album itself
         albumRepository.delete(album);
     }
@@ -116,17 +113,4 @@ public class AlbumService {
         return modelMapper.map(album, AlbumDto.class);
     }
 
-    /**
-     * Deletes a file at the specified path if it exists.
-     * @param path Path of the file to be deleted.
-     */
-    private void deleteFile(String path) {
-        // Deletes a file at the specified path if it exists
-        try {
-            Path filePath = Paths.get(path);
-            Files.deleteIfExists(filePath);
-        } catch (IOException e) {
-            throw new RuntimeException("Error deleting file ", e);
-        }
-    }
 }
