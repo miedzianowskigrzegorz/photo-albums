@@ -5,7 +5,6 @@ import org.modelmapper.ModelMapper;
 import org.modelmapper.TypeToken;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
-import pl.gm.albums.album.dto.AlbumDto;
 import pl.gm.albums.photo.dto.PhotoDto;
 import pl.gm.albums.photo.model.PhotoEntity;
 import pl.gm.albums.photo.repository.PhotoRepository;
@@ -35,8 +34,7 @@ public class PhotoService {
      */
     public List<PhotoDto> listAll() {
         List<PhotoEntity> photoEntities = photoRepository.findAll();
-        return modelMapper.map(photoEntities, new TypeToken<List<AlbumDto>>() {
-        }.getType());
+        return modelMapper.map(photoEntities, new TypeToken<List<PhotoDto>>() {}.getType());
     }
 
     /**
@@ -92,7 +90,7 @@ public class PhotoService {
         PhotoDto photo = new PhotoDto();
         photo.setFileName(imageFile.getOriginalFilename());
         photo.setPath(path);
-        saveFile(imageFile, path);
+        savePhotoFile(imageFile, path);
         PhotoEntity photoEntity = modelMapper.map(photo, PhotoEntity.class);
         photoRepository.save(photoEntity);
         return modelMapper.map(photoEntity, PhotoDto.class);
@@ -105,7 +103,7 @@ public class PhotoService {
      * @param path Path where the file should be saved on the server.
      * @throws IOException if an I/O error occurs.
      */
-    private void saveFile(MultipartFile file, String path) {
+    static void savePhotoFile(MultipartFile file, String path) {
         try {
             Path filePath = Paths.get(path, file.getOriginalFilename());
             Files.copy(file.getInputStream(), filePath, StandardCopyOption.REPLACE_EXISTING);
@@ -113,4 +111,18 @@ public class PhotoService {
             throw new RuntimeException("Saving file error " + file.getOriginalFilename(), e);
         }
     }
+
+    /** Deletes a file at the specified path if it exists.
+            * @param path Path of the file to be deleted.
+            */
+     public void deletePhotoFile(String path) {
+        // Deletes a file at the specified path if it exists
+        try {
+            Path filePath = Paths.get(path);
+            Files.deleteIfExists(filePath);
+        } catch (IOException e) {
+            throw new RuntimeException("Error deleting file ", e);
+        }
+    }
+
 }
